@@ -100,12 +100,11 @@ classdef SignalAcquisition
 
         end
 
-
         % ========================================================== %
 
 
         % ================= Acquisition ============================ %
-        function output_struct = acquireSV(obj)
+        function search_struct = acquireSV(obj)
 
             fprintf('Beginning Parallel Search!\n')
             fprintf('Parallelizing Code Search\n\n')
@@ -150,12 +149,13 @@ classdef SignalAcquisition
                 output_struct.doppler_shift = dopplers_found;
                 output_struct.code_shift = codes_found;
 
+
         end
 
         % Parallel Search
-        function parallel_correlation = parallelSearch(obj,current_data)
+        function parallel_correlation = parallelSearch(obj)
 
-            data = current_data;
+            data = obj.IF_data;
             length_data = length(data);
 
             [num_codes,~] = size(obj.sv_prns);
