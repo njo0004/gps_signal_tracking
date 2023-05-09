@@ -1,16 +1,26 @@
 classdef PhaseLockLoop
 
-    %{
-        Class for a Generic Phase Lock Loop
-            
-        I have developed a working second order phase lock loop on IFEN
-        data that is successful in tracking GPS signals for a specific PRN
-        given IF data
+%{
+    Class for a Generic Phase Locked Loop
+        
+    Default will be a 3rd order PLL w/ a 2nd order FLL
+        See Kaplan Book for example
 
-        I will implement a second order PLL for now, with the goal of
-        upgrading it to a 3rd order PLL assisted w/ a second order FLL
+    Inputs:
+    1) IF Data
+    2) Upsampled Prompt CA Code 
+    
+    Outputs:
+    1) Phase Discriminator (Costas)
+    2) Frequency Discriminator (Half Cycle)
+    3) Phase Remainder
+    4) Frequency
 
-    %}
+    Parameters:
+    1) Bandwidth of Phase Lock Loop
+    2) Bandwidth of Frequency Lock Loop
+
+%}
 
 properties
 
