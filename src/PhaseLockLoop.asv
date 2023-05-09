@@ -112,8 +112,6 @@ methods
 
         obj.current_phase = obj.new_phase;
         
-        length_data = length(obj.if_data);
-
         % --- Carrier Replicas --- %
         obj.sin_signal = sin(2*pi*(obj.f_IF+obj.f_hat)*obj.Tsignal + obj.current_phase);
         obj.cos_signal = cos(2*pi*(obj.f_IF+obj.f_hat)*obj.Tsignal + obj.current_phase);
@@ -122,24 +120,12 @@ methods
         obj.IP = sum(obj.if_data.*obj.sin_signal.*obj.code_replica);
         obj.QP = sum(obj.if_data.*obj.cos_signal.*obj.code_replica);
 
-        % --- FLL Correlator --- %
-        obj.IP1 = sum(obj.if_data(1:length_data/2).*obj.sin_signal(1:length_data/2).*obj.code_replica(1:length_data/2));
-        obj.QP1 = sum(obj.if_data(1:length_data/2).*obj.cos_signal(1:length_data/2).*obj.code_replica(1:length_data/2));
-        obj.IP2 = sum(obj.if_data((length_data/2 + 1):end).*obj.sin_signal((length_data/2 + 1):end).*obj.code_replica((length_data/2 + 1):end));
-        obj.QP2 = sum(obj.if_data((length_data/2 + 1):end).*obj.cos_signal((length_data/2 + 1):end).*obj.code_replica((length_data/2 + 1):end));
-
         obj.new_phase = rem(2*pi*(obj.f_IF+obj.f_hat)*obj.Tsignal(end) + obj.current_phase,2*pi);
 
     end
 
     function obj = discriminationUpdate(obj)
 
-        % --- Costas (PLL) Discriminator --- %
-        obj.e_pll = atan(obj.QP/obj.IP);
-
-        % --- FLL Discriminator ---- %
-%         cross = 
-%         dot = 
 
     end
 
