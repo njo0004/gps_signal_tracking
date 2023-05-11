@@ -122,11 +122,6 @@ methods
         obj.QP1 = correlators.QP1;
         obj.QP2 = correlators.QP2;
 
-        % --- Running Class --- %
-        discriminationUpdate(obj);
-        runLoopFilter(obj);
-        output = outputLoopResults(obj);
-
     end
 
     function obj = discriminationUpdate(obj)
@@ -145,6 +140,7 @@ methods
     function obj = runLoopFilter(obj)
 
         % Update Discriminators based on current IF data
+        discriminationUpdate;
 
         % --- PLL w/ FLL assistance from a combination of Dr. Martin thesis
         % and kapalan green book --- %
@@ -167,6 +163,8 @@ methods
     end
 
     function output_struct = outputLoopResults(obj)
+
+        runLoopFilter;
 
         output_struct.doppler_est = obj.f_hat;
         output_struct.phase_est = obj.new_phase;
