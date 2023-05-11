@@ -56,6 +56,7 @@ properties
     if_data
     code_replica
     Tsignal
+    Tint
 
     % --- Carrier Replicas --- %
     sin_signal
@@ -105,6 +106,7 @@ methods
         obj.if_data = if_data_in;
         obj.code_replica = code_in;
         obj.Tsignal = Tsig_in;
+        obj.Tint = obj.Tsignal(end);
 
     end
 
@@ -128,23 +130,33 @@ methods
         obj.IP2 = sum(obj.if_data((length_data/2 + 1):end).*obj.sin_signal((length_data/2 + 1):end).*obj.code_replica((length_data/2 + 1):end));
         obj.QP2 = sum(obj.if_data((length_data/2 + 1):end).*obj.cos_signal((length_data/2 + 1):end).*obj.code_replica((length_data/2 + 1):end));
 
-        obj.new_phase = rem(2*pi*(obj.f_IF+obj.f_hat)*obj.Tsignal(end) + obj.current_phase,2*pi);
+        obj.new_phase = rem(2*pi*(obj.f_IF+obj.f_hat)*obj.Tint + obj.current_phase,2*pi);
 
     end
 
     function obj = discriminationUpdate(obj)
 
         % --- Costas (PLL) Discriminator --- %
-        obj.e_pll = atan(obj.QP/obj.IP);
+        obj.e_pll = atan(obj.QP/obj.IP)/(2*pi);
 
         % --- FLL Discriminator ---- %
-%         cross = 
-%         dot = 
+        cross = obj.IP1*obj.QP2 - obj.IP2*obj.QP1;
+        dot   = obj.IP1*obj.IP2 + obj.QP1*obj.QP2;
+
+        obj.e_fll = atan2(cross,dot)/(2*pi*obj.Tint);
 
     end
 
     function obj = runLoopFilter(obj)
 
+        % Update Correlators and Discriminators based on current IF data
+        correlationUpdate();
+        discriminationUpdate();
+
+        % --- PLL w/ FLL assistance from a combination of Dr. Martin thesis
+        % and kapalan green book --- %
+
+%         obj.
 
     end
 
