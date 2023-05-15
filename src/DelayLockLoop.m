@@ -94,8 +94,8 @@ classdef DelayLockLoop
             obj.late_power = late_power;
             obj.Tint = Tint;
 
-            discriminatorUpdate(obj);
-            runLoopFilter(obj);
+            obj = discriminatorUpdate(obj);
+            obj = runLoopFilter(obj);
             output = outputLoopResults(obj);
 
         end

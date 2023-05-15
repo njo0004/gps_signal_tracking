@@ -64,26 +64,5 @@ initialization.dll_bw = dll_bw;
 
 initialization.acq_doppler = acquisition_data.doppler_shift(acquisition_data.sv_list == 7);
 initialization.chipping_rate = chipping_rate;
-initialization.ca_code = ca_code(7,:);
 
-tracking_class = TrackingChannel(initialization);
-
-seconds_to_read = 5*60; % grab this many samples of data
-max_counter = seconds_to_read*20000*1000; % [max number of samples to read]
-
-i = 1;
-
-Tsignal = 0:1/SF:0.001;
-Tsignal(end) = [];
-
-while i<=max_counter
-
-data_length = length(Tsignal);
-
-fseek(fileID,i-1+acquisition_data.code_shift(acquisition_data.sv_list == 7),'bof');
-[currentData,~] = fread(fileID,data_length,dataType);
-
-tracking_class.ingestData(currentData);
-
-end
-
+tracking_

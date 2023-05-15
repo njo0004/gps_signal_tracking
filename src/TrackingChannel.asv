@@ -67,7 +67,11 @@ methods
         obj.doppler_frequency   = initialization.acq_doppler;
 
         obj.chipping_rate = initialization.chipping_rate;
-        obj.if_frequency = initialization.if_freq;
+        obj.if_frequency = initialization.f_if;
+        obj.sample_rate = initialization.f_s;
+        obj.ca_code = initialization.ca_code;
+        obj.code_rem_phase = 0;
+        obj.carrier_rem_phase = 0;
 
         % --- Making Initialization Structs for tracking loops --- %
         pll_initialization.pll_Bw = obj.filter_bandwidths.pll;
@@ -82,31 +86,50 @@ methods
 
     end
 
-    function obj = generateCorrelators(obj,input_data)
+    function [obj,tracking_results] = ingestData(obj,input_data)
 
         obj.current_data = input_data;
+        obj = generateCorrelators(obj);
+
+        pll_correlators.IP = obj.full_cycle_power.IP;
+        pll_correlators.QP = obj.full_cycle_power.QP;
+        pll_correlators.IP1 = obj.half_cycle_power.IP1;
+        pll_correlators.IP2 = obj.half_cycle_power.IP1
+        pll_correlators.QP1 = obj.half_cycle_power.IP1
+        pll_correlators.QP2 = obj.half_cycle_power.IP1
+
+        disp('pause');
+
+    end
+
+
+    function obj = generateCorrelators(obj)
         
         obj.Tint = (1/obj.sample_rate)*length(obj.current_data);
-        upsamplePRN(obj);
+        obj = upsamplePRN(obj);
         obj.Tsignal = 0:1/obj.sample_rate:obj.Tint;
-        
+        obj.Tsignal(end) = [];
+
+        chip_spacing = ceil(obj.correlator_spacing*(obj.sample_rate/obj.chipping_rate));
+
         % --- NCO --- %
         obj.sin_signal = 2.*sin(2*pi*(obj.if_frequency + obj.doppler_frequency).*obj.Tsignal + obj.carrier_rem_phase);
         obj.cos_signal = 2.*cos(2*pi*(obj.if_frequency + obj.doppler_frequency).*obj.Tsignal + obj.carrier_rem_phase);
+        obj.carrier_rem_phase = rem(2*pi*(obj.if_frequency + obj.doppler_frequency)*obj.Tint + obj.carrier_rem_phase,2*pi);
 
         % --- Shifted Code Replicas --- %
-        early_code = circshift(obj.upsampled_code,obj.correlator_spacing);
-        late_code  = circshift(obj.upsampled_code,-obj.correlator_spacing);
+        early_code = circshift(obj.upsampled_code,chip_spacing);
+        late_code  = circshift(obj.upsampled_code,-chip_spacing);
 
         % --- Full Cycle Correlators --- %
-        obj.full_cycle_power.IP = sum(obj.current_data.*obj.sin_signal.*obj.upsampled_code);
-        obj.full_cycle_power.QP = sum(obj.current_data.*obj.cos_signal.*obj.upsampled_code);
+        obj.full_cycle_power.IP = sum(obj.current_data'.*obj.sin_signal.*obj.upsampled_code);
+        obj.full_cycle_power.QP = sum(obj.current_data'.*obj.cos_signal.*obj.upsampled_code);
 
-        obj.full_cycle_power.IE = sum(obj.current_data.*obj.sin_signal.*early_code);
-        obj.full_cycle_power.QE = sum(obj.current_data.*obj.cos_signal.*early_code);
+        obj.full_cycle_power.IE = sum(obj.current_data'.*obj.sin_signal.*early_code);
+        obj.full_cycle_power.QE = sum(obj.current_data'.*obj.cos_signal.*early_code);
 
-        obj.full_cycle_power.IL = sum(obj.current_data.*obj.sin_signal.*late_code);
-        obj.full_cycle_power.QL = sum(obj.current_data.*obj.cos_signal.*late_code);
+        obj.full_cycle_power.IL = sum(obj.current_data'.*obj.sin_signal.*late_code);
+        obj.full_cycle_power.QL = sum(obj.current_data'.*obj.cos_signal.*late_code);
 
         % --- Half Cycle Correlators --- %
         data_first_half  = obj.current_data(1:length(obj.current_data)/2);
@@ -121,7 +144,11 @@ methods
         code_first_half  = obj.upsampled_code(1:length(obj.current_data)/2);
         code_second_half = obj.upsampled_code(length(obj.current_data)/2 + 1:end);
 
-        obj.half_cycle_power.
+        obj.half_cycle_power.IP1 = sum(data_first_half'.*sin_first_half.*code_first_half);
+        obj.half_cycle_power.IP2 = sum(data_second_half'.*sin_second_half.*code_second_half);
+
+        obj.half_cycle_power.QP1 = sum(data_first_half'.*cos_first_half.*code_first_half);
+        obj.half_cycle_power.QP2 = sum(data_second_half'.*cos_second_half.*code_second_half);
 
     end
 
@@ -158,7 +185,6 @@ methods
         obj.code_rem_phase = code_subchip_idx(samp_per_code_period) + chip_per_samp - code_length; % [samples]
 
     end
-
 
 end % end of methods
 

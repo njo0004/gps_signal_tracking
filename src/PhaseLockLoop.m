@@ -57,10 +57,6 @@ properties
     % --- Input Data --- %
     Tint
 
-    % --- Carrier Replicas --- %
-    sin_signal
-    cos_signal
-    
     % --- Full Period Correlator Output --- %
     IP
     QP
@@ -79,9 +75,6 @@ properties
     f_hat % <- is the frequency estimate from the loop filter
     f_acq % <- is the frequency from acquisition
 
-    current_phase
-    new_phase
-
 end % end of properties
 
 methods
@@ -96,9 +89,6 @@ methods
 
         obj.f_acq  = initialization_struct.acquisition_frequency;
         obj.f_hat  = initialization_struct.acquisition_frequency;
-
-        obj.current_phase = 0;
-        obj.new_phase = 0;
 
     end
 
@@ -116,8 +106,8 @@ methods
         obj.QP2 = correlators.QP2;
 
         % --- Running Class --- %
-        discriminationUpdate(obj);
-        runLoopFilter(obj);
+        obj = discriminationUpdate(obj);
+        obj = runLoopFilter(obj);
         output = outputLoopResults(obj);
 
     end
@@ -162,7 +152,6 @@ methods
     function output_struct = outputLoopResults(obj)
 
         output_struct.doppler_est = obj.f_hat;
-        output_struct.phase_est = obj.new_phase;
         output_struct.e_pll = obj.e_pll;
         output_struct.e_fll = obj.e_fll;
 

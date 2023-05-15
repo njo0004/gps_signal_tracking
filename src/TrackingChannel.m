@@ -67,7 +67,11 @@ methods
         obj.doppler_frequency   = initialization.acq_doppler;
 
         obj.chipping_rate = initialization.chipping_rate;
-        obj.if_frequency = initialization.if_freq;
+        obj.if_frequency = initialization.f_if;
+        obj.sample_rate = initialization.f_s;
+        obj.ca_code = initialization.ca_code;
+        obj.code_rem_phase = 0;
+        obj.carrier_rem_phase = 0;
 
         % --- Making Initialization Structs for tracking loops --- %
         pll_initialization.pll_Bw = obj.filter_bandwidths.pll;
@@ -85,8 +89,27 @@ methods
     function [obj,tracking_results] = ingestData(obj,input_data)
 
         obj.current_data = input_data;
-        generateCorrelators;
+        obj = generateCorrelators(obj);
 
+        % --- Correlators for PLL --- %
+        pll_correlators.IP = obj.full_cycle_power.IP;
+        pll_correlators.QP = obj.full_cycle_power.QP;
+        pll_correlators.IP1 = obj.half_cycle_power.IP1;
+        pll_correlators.IP2 = obj.half_cycle_power.IP2;
+        pll_correlators.QP1 = obj.half_cycle_power.QP1;
+        pll_correlators.QP2 = obj.half_cycle_power.QP2;
+
+        % --- Correlators for DLL --- %
+        early_power = sqrt(obj.full_cycle_power.IE^2 + obj.full_cycle_power.QE^2);
+        late_power  = sqrt(obj.full_cycle_power.IL^2 + obj.full_cycle_power.QL^2);
+
+        obj.phase_lock_loop = obj.phase_lock_loop.ingestData(obj.Tint,pll_correlators);
+        obj.delay_lock_loop = obj.delay_lock_loop.ingestData(early_power,late_power,obj.Tint);
+
+        obj.doppler_frequency = obj.phase_lock_loop.f_hat;
+        obj.chipping_rate     = obj.delay_lock_loop.chipping_rate;
+
+        disp('pause');
 
     end
 
@@ -94,27 +117,30 @@ methods
     function obj = generateCorrelators(obj)
         
         obj.Tint = (1/obj.sample_rate)*length(obj.current_data);
-        upsamplePRN(obj);
+        obj = upsamplePRN(obj);
         obj.Tsignal = 0:1/obj.sample_rate:obj.Tint;
-        
+        obj.Tsignal(end) = [];
+
+        chip_spacing = ceil(obj.correlator_spacing*(obj.sample_rate/obj.chipping_rate));
+
         % --- NCO --- %
         obj.sin_signal = 2.*sin(2*pi*(obj.if_frequency + obj.doppler_frequency).*obj.Tsignal + obj.carrier_rem_phase);
         obj.cos_signal = 2.*cos(2*pi*(obj.if_frequency + obj.doppler_frequency).*obj.Tsignal + obj.carrier_rem_phase);
-        obj.carrier_rem_phase = remp(2*pi*(obj.if_frequency + obj.doppler_frequency)*obj.Tint + obj.carrier_rem_phase,2*pi);
+        obj.carrier_rem_phase = rem(2*pi*(obj.if_frequency + obj.doppler_frequency)*obj.Tint + obj.carrier_rem_phase,2*pi);
 
         % --- Shifted Code Replicas --- %
-        early_code = circshift(obj.upsampled_code,obj.correlator_spacing);
-        late_code  = circshift(obj.upsampled_code,-obj.correlator_spacing);
+        early_code = circshift(obj.upsampled_code,chip_spacing);
+        late_code  = circshift(obj.upsampled_code,-chip_spacing);
 
         % --- Full Cycle Correlators --- %
-        obj.full_cycle_power.IP = sum(obj.current_data.*obj.sin_signal.*obj.upsampled_code);
-        obj.full_cycle_power.QP = sum(obj.current_data.*obj.cos_signal.*obj.upsampled_code);
+        obj.full_cycle_power.IP = sum(obj.current_data'.*obj.sin_signal.*obj.upsampled_code);
+        obj.full_cycle_power.QP = sum(obj.current_data'.*obj.cos_signal.*obj.upsampled_code);
 
-        obj.full_cycle_power.IE = sum(obj.current_data.*obj.sin_signal.*early_code);
-        obj.full_cycle_power.QE = sum(obj.current_data.*obj.cos_signal.*early_code);
+        obj.full_cycle_power.IE = sum(obj.current_data'.*obj.sin_signal.*early_code);
+        obj.full_cycle_power.QE = sum(obj.current_data'.*obj.cos_signal.*early_code);
 
-        obj.full_cycle_power.IL = sum(obj.current_data.*obj.sin_signal.*late_code);
-        obj.full_cycle_power.QL = sum(obj.current_data.*obj.cos_signal.*late_code);
+        obj.full_cycle_power.IL = sum(obj.current_data'.*obj.sin_signal.*late_code);
+        obj.full_cycle_power.QL = sum(obj.current_data'.*obj.cos_signal.*late_code);
 
         % --- Half Cycle Correlators --- %
         data_first_half  = obj.current_data(1:length(obj.current_data)/2);
@@ -129,11 +155,11 @@ methods
         code_first_half  = obj.upsampled_code(1:length(obj.current_data)/2);
         code_second_half = obj.upsampled_code(length(obj.current_data)/2 + 1:end);
 
-        obj.half_cycle_power.IP1 = sum(data_first_half.*sin_first_half.*code_first_half);
-        obj.half_cycle_power.IP2 = sum(data_second_half.*sin_second_half.*code_second_half);
+        obj.half_cycle_power.IP1 = sum(data_first_half'.*sin_first_half.*code_first_half);
+        obj.half_cycle_power.IP2 = sum(data_second_half'.*sin_second_half.*code_second_half);
 
-        obj.half_cycle_power.QP1 = sum(data_first_half.*cos_first_half.*code_first_half);
-        obj.half_cycle_power.QP2 = sum(data_second_half.*cos_second_half.*code_second_half);
+        obj.half_cycle_power.QP1 = sum(data_first_half'.*cos_first_half.*code_first_half);
+        obj.half_cycle_power.QP2 = sum(data_second_half'.*cos_second_half.*code_second_half);
 
     end
 
