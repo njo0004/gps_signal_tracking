@@ -128,17 +128,20 @@ classdef SignalAcquisition
 
                         if(~isempty(new_svs))
 
-                            new_dopplers = search_struct(i).dop_shift(search_struct(i).acquired_sv == new_svs);
-                            new_codes = search_struct(i).code_shift(search_struct(i).acquired_sv == new_svs);
+                            for j = 1:length(new_svs)
+                               
+                                new_dopplers = search_struct(i).dop_shift(search_struct(i).acquired_sv == new_svs(j));
+                                new_codes = search_struct(i).code_shift(search_struct(i).acquired_sv == new_svs(j));
+    
+                                [svs_found,sorted_idx] = sort([svs_found,new_svs(j)],'ascend');
+                            
+                                dopplers_found = [dopplers_found new_dopplers];
+                                dopplers_found = dopplers_found(sorted_idx);
+            
+                                codes_found = [codes_found new_codes];
+                                codes_found = codes_found(sorted_idx);
 
-                            [svs_found,sorted_idx] = sort([svs_found,new_svs],'ascend');
-                        
-                            dopplers_found = [dopplers_found new_dopplers];
-                            dopplers_found = dopplers_found(sorted_idx);
-        
-                            codes_found = [codes_found new_codes];
-                            codes_found = codes_found(sorted_idx);
-
+                            end
                         end
 
                     end

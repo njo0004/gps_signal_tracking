@@ -58,7 +58,6 @@ classdef DelayLockLoop
         Tint
         e_hat
         
-        chip_spacing = 0.5; % <= for discriminator
         chipping_rate
         nominal_chipping_rate
 
@@ -76,7 +75,6 @@ classdef DelayLockLoop
             obj.Kp = 2*0.707*(obj.bandwidth*2*pi);
             obj.Ki = (2*pi*obj.bandwidth)^2;
             obj.nominal_chipping_rate = initialization.nom_chipping_rate;
-            obj.Tint = initialization.Tint;
 
         end
         
@@ -90,10 +88,11 @@ classdef DelayLockLoop
 
         end
 
-        function [obj,output] = ingestData(obj,early_power,late_power)
+        function [obj,output] = ingestData(obj,early_power,late_power,Tint)
 
             obj.early_power = early_power;
             obj.late_power = late_power;
+            obj.Tint = Tint;
 
             discriminatorUpdate(obj);
             runLoopFilter(obj);

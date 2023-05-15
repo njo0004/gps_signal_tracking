@@ -55,9 +55,6 @@ properties
     fll_W0
 
     % --- Input Data --- %
-    if_data
-    code_replica
-    Tsignal
     Tint
 
     % --- Carrier Replicas --- %
@@ -81,7 +78,7 @@ properties
     % --- Signal Parameters --- %
     f_hat % <- is the frequency estimate from the loop filter
     f_acq % <- is the frequency from acquisition
-    f_IF  % <- is the IF frequency (of the front end)
+
     current_phase
     new_phase
 
@@ -99,7 +96,6 @@ methods
 
         obj.f_acq  = initialization_struct.acquisition_frequency;
         obj.f_hat  = initialization_struct.acquisition_frequency;
-        obj.f_IF   = initialization.f_IF;
 
         obj.current_phase = 0;
         obj.new_phase = 0;
@@ -107,12 +103,9 @@ methods
     end
 
     % Function to intake data
-    function [obj,output] = ingestData(obj,if_data_in,code_in,Tsig_in,correlators)
+    function [obj,output] = ingestData(obj,Tint,correlators)
 
-        obj.if_data = if_data_in;
-        obj.code_replica = code_in;
-        obj.Tsignal = Tsig_in;
-        obj.Tint = obj.Tsignal(end);
+        obj.Tint = Tint;
 
         obj.IP = correlators.IP;
         obj.QP = correlators.QP;
