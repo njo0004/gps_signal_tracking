@@ -118,6 +118,7 @@ methods
         tracking_results.prompt_power = sqrt(pll_correlators.IP^2 + pll_correlators.QP^2);
         tracking_results.carrier_rem_phase = obj.carrier_rem_phase;
         tracking_results.code_rem_phase = obj.code_rem_phase;
+        tracking_results.e_fll = obj.phase_lock_loop.e_fll;
 
     end
 
@@ -125,7 +126,6 @@ methods
     function obj = generateCorrelators(obj)
         
         obj.Tint = (1/obj.sample_rate)*length(obj.current_data);
-        obj = upsamplePRN(obj);
         obj.Tsignal = 0:1/obj.sample_rate:obj.Tint;
         obj.Tsignal(end) = [];
 
@@ -151,17 +151,19 @@ methods
         obj.full_cycle_power.QL = sum(obj.current_data'.*obj.cos_signal.*late_code);
 
         % --- Half Cycle Correlators --- %
-        data_first_half  = obj.current_data(1:length(obj.current_data)/2);
-        data_second_half = obj.current_data(length(obj.current_data)/2 + 1:end);
+        half_data_length = floor(length(obj.current_data)/2);
 
-        sin_first_half  = obj.sin_signal(1:length(obj.current_data)/2);
-        sin_second_half = obj.sin_signal(length(obj.current_data)/2 + 1:end);
+        data_first_half  = obj.current_data(1:half_data_length);
+        data_second_half = obj.current_data(half_data_length + 1:end);
 
-        cos_first_half  = obj.cos_signal(1:length(obj.current_data)/2);
-        cos_second_half = obj.cos_signal(length(obj.current_data)/2 + 1:end);
+        sin_first_half  = obj.sin_signal(1:half_data_length);
+        sin_second_half = obj.sin_signal(half_data_length + 1:end);
 
-        code_first_half  = obj.upsampled_code(1:length(obj.current_data)/2);
-        code_second_half = obj.upsampled_code(length(obj.current_data)/2 + 1:end);
+        cos_first_half  = obj.cos_signal(1:half_data_length);
+        cos_second_half = obj.cos_signal(half_data_length + 1:end);
+
+        code_first_half  = obj.upsampled_code(1:half_data_length);
+        code_second_half = obj.upsampled_code(half_data_length + 1:end);
 
         obj.half_cycle_power.IP1 = sum(data_first_half'.*sin_first_half.*code_first_half);
         obj.half_cycle_power.IP2 = sum(data_second_half'.*sin_second_half.*code_second_half);
@@ -171,7 +173,7 @@ methods
 
     end
 
-    function obj = upsamplePRN(obj)
+    function [obj,length_upsamp_code] = upsamplePRN(obj)
         %UPSAMPLE_CODE Upsamples any code (eg. ranging, data, etc.) based on the sampling rate
         % and current chipping rate of the code.
         %
@@ -209,7 +211,9 @@ methods
 
         obj.upsampled_code = upsamp_code;
         obj.code_rem_phase = new_rem_code_phase;
-        
+
+        length_upsamp_code = length(obj.upsampled_code);
+
     end
 
 end % end of methods
