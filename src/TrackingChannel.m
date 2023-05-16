@@ -109,7 +109,15 @@ methods
         obj.doppler_frequency = obj.phase_lock_loop.f_hat;
         obj.chipping_rate     = obj.delay_lock_loop.chipping_rate;
 
-        disp('pause');
+        tracking_results.IP = pll_correlators.IP;
+        tracking_results.QP = pll_correlators.QP;
+        tracking_results.doppler_estimate = obj.doppler_frequency;
+        tracking_results.chipping_rate = obj.chipping_rate;
+        tracking_results.early_power = early_power;
+        tracking_results.late_power = late_power;
+        tracking_results.prompt_power = sqrt(pll_correlators.IP^2 + pll_correlators.QP^2);
+        tracking_results.carrier_rem_phase = obj.carrier_rem_phase;
+        tracking_results.code_rem_phase = obj.code_rem_phase;
 
     end
 
@@ -164,7 +172,6 @@ methods
     end
 
     function obj = upsamplePRN(obj)
-
         %UPSAMPLE_CODE Upsamples any code (eg. ranging, data, etc.) based on the sampling rate
         % and current chipping rate of the code.
         %
@@ -179,22 +186,30 @@ methods
         %       - new_rem_code_phase: new remainder code phase [fractional chips]
         %
         %   Author: Tanner Koza
+
+        code = obj.ca_code;
+        fsamp = obj.sample_rate;
+        fchip = obj.chipping_rate;
+        rem_code_phase = obj.code_rem_phase;
         
         % intialization
-        code_length = length(obj.ca_code);
-        samp_per_chip = obj.sample_rate/obj.chipping_rate;
+        code_length = length(code);
+        samp_per_chip = fsamp/fchip;
         chip_per_samp = 1/samp_per_chip;
         
-        samp_per_code_period = ceil((code_length-obj.code_rem_phase)/chip_per_samp);
-        appended_code = [obj.ca_code(end) obj.ca_code obj.ca_code(1)];
+        samp_per_code_period = ceil((code_length-rem_code_phase)/chip_per_samp);
+        appended_code = [code(end) code code(1)];
         
         % upsampling
-        code_subchip_idx = obj.code_rem_phase:chip_per_samp:(samp_per_code_period-1)*chip_per_samp + obj.code_rem_phase; % [fractional chips]
+        code_subchip_idx = rem_code_phase:chip_per_samp:(samp_per_code_period-1)*chip_per_samp + rem_code_phase; % [fractional chips]
         code_chip_idx = ceil(code_subchip_idx) + 1; % add 1 for one-indexing [whole chips]
-        obj.upsampled_code = appended_code(code_chip_idx);
+        upsamp_code = appended_code(code_chip_idx);
         
-        obj.code_rem_phase = code_subchip_idx(samp_per_code_period) + chip_per_samp - code_length; % [samples]
+        new_rem_code_phase = code_subchip_idx(samp_per_code_period) + chip_per_samp - code_length; % [samples]
 
+        obj.upsampled_code = upsamp_code;
+        obj.code_rem_phase = new_rem_code_phase;
+        
     end
 
 end % end of methods

@@ -54,8 +54,8 @@ acquisition_data = acquisition_class.acquireSV;
 
 %% Tracking
 
-pll_bw = 10;
-fll_bw = 5;
+pll_bw = 15;
+fll_bw = 0;
 dll_bw = 5;
 
 initialization.fll_bw = fll_bw;
@@ -72,6 +72,7 @@ seconds_to_read = 5*60; % grab this many samples of data
 max_counter = seconds_to_read*20000*1000; % [max number of samples to read]
 
 i = 1;
+j = 1;
 
 Tsignal = 0:1/SF:0.001;
 Tsignal(end) = [];
@@ -83,7 +84,20 @@ data_length = length(Tsignal);
 fseek(fileID,i-1+acquisition_data.code_shift(acquisition_data.sv_list == 7),'bof');
 [currentData,~] = fread(fileID,data_length,dataType);
 
-tracking_class.ingestData(currentData);
+[~,current_results] = tracking_class.ingestData(currentData);
+
+IP(j) = current_results.IP;
+QP(j) = current_results.QP;
+doppler_estimate(j) = current_results.doppler_estimate;
+early_power(j) = current_results.early_power;
+late_power(j) = current_results.late_power;
+prompt_power(j) = current_results.prompt_power;
+carrier_phase(j) = current_results.carrier_rem_phase;
+code_phase(j) = current_results.code_rem_phase;
+
+j = j + 1;
+
+i = i + data_length;
 
 end
 

@@ -72,8 +72,8 @@ classdef DelayLockLoop
         function obj = DelayLockLoop(initialization)
 
             obj.bandwidth = initialization.bw;
-            obj.Kp = 2*0.707*(obj.bandwidth*2*pi);
-            obj.Ki = (2*pi*obj.bandwidth)^2;
+            obj.Kp = 2*0.707*(obj.bandwidth);
+            obj.Ki = (obj.bandwidth)^2;
             obj.nominal_chipping_rate = initialization.nom_chipping_rate;
 
         end
