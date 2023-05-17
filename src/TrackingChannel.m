@@ -38,9 +38,15 @@ properties
     Tint
     Tsignal
 
+    % --- CN0 Estimator Params --- %
+    cn0_averaging_window
+    cn0_counter
+    cn0_estimate = 0;
+
     % --- Objects for Individual Tracking Loops --- %
     phase_lock_loop
     delay_lock_loop
+    cn0_estimator
 
     % --- Local Replica Stuff --- %
     code_rem_phase
@@ -72,6 +78,7 @@ methods
         obj.ca_code = initialization.ca_code;
         obj.code_rem_phase = 0;
         obj.carrier_rem_phase = 0;
+        obj.cn0_averaging_window = initialization.cn0_averaging_window;
 
         % --- Making Initialization Structs for tracking loops --- %
         pll_initialization.pll_Bw = obj.filter_bandwidths.pll;
@@ -81,8 +88,11 @@ methods
         dll_initialization.bw = obj.filter_bandwidths.dll;
         dll_initialization.nom_chipping_rate = obj.chipping_rate;
 
+        cn0_initialization.ave_window = obj.cn0_averaging_window;
+
         obj.phase_lock_loop = PhaseLockLoop(pll_initialization);
         obj.delay_lock_loop = DelayLockLoop(dll_initialization);
+        obj.cn0_estimator   = Cn0Estimator(cn0_initialization);
 
     end
 
@@ -103,12 +113,21 @@ methods
         early_power = sqrt(obj.full_cycle_power.IE^2 + obj.full_cycle_power.QE^2);
         late_power  = sqrt(obj.full_cycle_power.IL^2 + obj.full_cycle_power.QL^2);
 
+        % --- Running Sub-Classes --- %
         obj.phase_lock_loop = obj.phase_lock_loop.ingestData(obj.Tint,pll_correlators);
         obj.delay_lock_loop = obj.delay_lock_loop.ingestData(early_power,late_power,obj.Tint);
+        [obj.cn0_estimator,obj.cn0_counter] = obj.cn0_estimator.ingestData(obj.full_cycle_power.IP);
+
+        if(obj.cn0_counter == obj.cn0_averaging_window)
+
+            [obj.cn0_estimator,obj.cn0_estimate] = obj.cn0_estimator.getCn0Estimate(obj.Tint);
+
+        end
 
         obj.doppler_frequency = obj.phase_lock_loop.f_hat;
         obj.chipping_rate     = obj.delay_lock_loop.chipping_rate;
 
+        tracking_results.cn0_estimate = obj.cn0_estimate;
         tracking_results.IP = pll_correlators.IP;
         tracking_results.QP = pll_correlators.QP;
         tracking_results.doppler_estimate = obj.doppler_frequency;

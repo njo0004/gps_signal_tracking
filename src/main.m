@@ -13,19 +13,23 @@ path_if_data = ingest_data();
 
     To-Do:
 
-    1) Verify updated acquisition works (I am confident it will but this
-    needs to be checked with class static dataset)
+    1) Verify updated acquisition works [Done]
 
-    2) DLL Class (needs to be tested)
+    2) DLL Class [Done]
 
-    3) Tracking Channel Class (needs to be done)
+    3) Tracking Channel Class [Done]
 
-    4) PLL Class (needs to be tested)
+    4) PLL Class [Done]
 
     5) Cn0 Estimator
 
     6) Software Defined Receiver Class
 
+    7) Data Bit Processor Class
+
+    8) Pseudorange generator Class
+
+    9) Navigation WLS Class
 %}
 
 %% Acquisition
@@ -65,6 +69,7 @@ initialization.dll_bw = dll_bw;
 initialization.acq_doppler = acquisition_data.doppler_shift(acquisition_data.sv_list == 7);
 initialization.chipping_rate = chipping_rate;
 initialization.ca_code = ca_code(7,:);
+initialization.cn0_averaging_window = 50;
 
 tracking_class = TrackingChannel(initialization);
 
@@ -86,6 +91,7 @@ fseek(fileID,i-1+acquisition_data.code_shift(acquisition_data.sv_list == 7),'bof
 % --- Running Tracking Loops (one iteration) --- %
 [tracking_class,current_results] = tracking_class.ingestData(currentData);
 
+cn0_est(j) = current_results.cn0_estimate;
 IP(j) = current_results.IP;
 QP(j) = current_results.QP;
 doppler_estimate(j) = current_results.doppler_estimate;
