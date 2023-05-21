@@ -2,25 +2,15 @@ classdef TrackingChannel
     
     %{
 
-        Inputs
-            Initial Doppler
-            Loop Filter Bandwidths 
-                PLL
-                FLL
-                DLL
-            C/A Code for SV to track [1023 chips]
-            IF Frequency
-            Sample Rate
-                Used to calcualte nominal chipping rate
-            Tracking Power  
-                IP
-                QP
-                IE
-                QE
-                IL
-                QL
-            data for this integration period
-            
+        To-Do:
+            Data Bit Processing
+                1) Generate the bit stream from the inphase prompt power
+                2) Find Preamble/Detect bit stream is inverted or no
+                3) save a subframe
+                4) Seperate subframes by words
+                5) get TOW from handover word
+                6) seperate out rest of ephemeris
+
     %}
 
 properties
@@ -37,6 +27,20 @@ properties
     chipping_rate
     Tint
     Tsignal
+
+    % --- Bit Processing --- %
+    is_locked = false; % <- boolean param to decide if the PLL is locked
+    have_found_first_bit = false; % <- boolean to decide if we have seem the first bit flip
+    preamble_found = false; 
+    is_fliped = false;
+
+    idx_first_bit
+    preamble = [1,-1,-1,-1,1,-1,1,1]; % [bits] 
+    chips_per_bit = 20;
+    bits_per_subframe = 300;
+    chips_per_subframe % we want two subframes to do processing because we can ensure we found the preamble and not just the correct string w/ two correlation spikes at 6000 samples apart
+    bit_buffer % <= where the IP is stored
+    bit_counter = 1;
 
     % --- CN0 Estimator Params --- %
     cn0_averaging_window
@@ -94,6 +98,14 @@ methods
         obj.delay_lock_loop = DelayLockLoop(dll_initialization);
         obj.cn0_estimator   = Cn0Estimator(cn0_initialization);
 
+        % --- Upsampling Preamble --- %
+        obj.chips_per_subframe = obj.chips_per_bit*obj.bits_per_subframe*2;
+
+        upsample_idx = ceil(0:1/obj.chips_per_bit:length(obj.preamble) - 1/obj.chips_per_bit) + 1;
+        upsample_idx(upsample_idx == 9) = 1;
+        obj.preamble = obj.preamble(upsample_idx);
+        obj.preamble = [obj.preamble zeros(1,obj.chips_per_subframe - length(obj.preamble))];
+        
     end
 
     function [obj,tracking_results] = ingestData(obj,input_data)
@@ -113,6 +125,11 @@ methods
         early_power = sqrt(obj.full_cycle_power.IE^2 + obj.full_cycle_power.QE^2);
         late_power  = sqrt(obj.full_cycle_power.IL^2 + obj.full_cycle_power.QL^2);
 
+        % --- Saving Tracking Results --- %
+        obj.bit_buffer(2) = sign(obj.full_cycle_power.IP);
+        
+        
+       
         % --- Running Sub-Classes --- %
         obj.phase_lock_loop = obj.phase_lock_loop.ingestData(obj.Tint,pll_correlators);
         obj.delay_lock_loop = obj.delay_lock_loop.ingestData(early_power,late_power,obj.Tint);
@@ -138,6 +155,7 @@ methods
         tracking_results.carrier_rem_phase = obj.carrier_rem_phase;
         tracking_results.code_rem_phase = obj.code_rem_phase;
         tracking_results.e_fll = obj.phase_lock_loop.e_fll;
+        tracking_results.e_pll = obj.phase_lock_loop.e_pll;
 
     end
 
@@ -232,6 +250,13 @@ methods
         obj.code_rem_phase = new_rem_code_phase;
 
         length_upsamp_code = length(obj.upsampled_code);
+
+    end
+
+    function obj = processDataBits(obj)
+
+        % --- Detecting Preamble --- %
+
 
     end
 

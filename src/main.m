@@ -101,6 +101,7 @@ prompt_power(j) = current_results.prompt_power;
 carrier_phase(j) = current_results.carrier_rem_phase;
 code_phase(j) = current_results.code_rem_phase;
 fll_disc(j) = current_results.e_fll;
+pll_disc(j) = current_results.e_pll;
 
 j = j + 1;
 
