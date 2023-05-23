@@ -2,16 +2,12 @@ classdef Cn0Estimator
 
     %{
 
-        Class to do a simple Cn0 estimator
-
-        inputs:
-            Tint
-            IP
-            Averaging window
-        
-        outputs: 
-            C/N0 estimate
-
+        CN0 Estimator is behaving weird,
+        tracking channel 7, there is a loss of inphase power at around the
+        20000th integration period, this should result in a lowering of the
+        CN0? However what I see is a spike in CN0 which doesnt seem right.
+        I will work to implement the algorithm from Anderson Givahn's
+        thesis and compare to the current estimation scheme
 
     %}
 

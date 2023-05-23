@@ -125,11 +125,6 @@ methods
         early_power = sqrt(obj.full_cycle_power.IE^2 + obj.full_cycle_power.QE^2);
         late_power  = sqrt(obj.full_cycle_power.IL^2 + obj.full_cycle_power.QL^2);
 
-        % --- Saving Tracking Results --- %
-        obj.bit_buffer(2) = sign(obj.full_cycle_power.IP);
-        
-        
-       
         % --- Running Sub-Classes --- %
         obj.phase_lock_loop = obj.phase_lock_loop.ingestData(obj.Tint,pll_correlators);
         obj.delay_lock_loop = obj.delay_lock_loop.ingestData(early_power,late_power,obj.Tint);
@@ -211,6 +206,7 @@ methods
     end
 
     function [obj,length_upsamp_code] = upsamplePRN(obj)
+        
         %UPSAMPLE_CODE Upsamples any code (eg. ranging, data, etc.) based on the sampling rate
         % and current chipping rate of the code.
         %
