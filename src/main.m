@@ -102,6 +102,7 @@ carrier_phase(j) = current_results.carrier_rem_phase;
 code_phase(j) = current_results.code_rem_phase;
 fll_disc(j) = current_results.e_fll;
 pll_disc(j) = current_results.e_pll;
+chipping_rate(j) = current_results.chipping_rate;
 
 j = j + 1;
 

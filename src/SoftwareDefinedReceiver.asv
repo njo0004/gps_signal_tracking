@@ -23,18 +23,16 @@ properties
 
     % --- General Properties --- %
     if_data_handle
-    if_frequency
-    
     sv_prns
+    
+    if_frequency
     nominal_chipping_rate
     sample_rate
     
     % --- Acquisition Properties --- %
-    acquisition_init = struct('acquisition_threshold',0,'acquisition_period',0,'acquisition_step_size',0);
+    
 
     % --- Tracking Properties --- %
-    filter_bandwidths
-    cn0_averaging_window
 
 end
 
@@ -42,7 +40,6 @@ methods
 
     function obj = SoftwareDefinedReceiver(initialization)
 
-        acquisition_init.aq_threshold = initialization.
 
     end
 
