@@ -203,19 +203,19 @@ methods
             noise_correlator.IE(i,:) = sum(obj.current_data'.*obj.sin_signal.*circshift(early_code,300*i));
             noise_correlator.IL(i,:) = sum(obj.current_data'.*obj.sin_signal.*circshift(late_code,-300*i));
             noise_correlator.QE(i,:) = sum(obj.current_data'.*obj.cos_signal.*circshift(early_code,300*i));
-            noise_correlator.QL(i,:) = sum(obj.current_data'.*obj.cos_signal.*circshift(late_code,-300*i));    
+            noise_correlator.QL(i,:) = sum(obj.current_data'.*obj.cos_signal.*circshift(late_code,-300*i));            
         end
 
-        var_IE = (1/50)*sum(noise_correlator.IE.^2);
-        var_IL = (1/50)*sum(noise_correlator.IL.^2);
-        var_QE = (1/50)*sum(noise_correlator.QE.^2);
-        var_QL = (1/50)*sum(noise_correlator.QL.^2);
+        noise_var.IE = var(noise_correlator.IE);
+        noise_var.IL = var(noise_correlator.IL);
+        noise_var.QE = var(noise_correlator.QE);
+        noise_var.QL = var(noise_correlator.QL);
 
         % --- CN0 Things --- %
         obj.channel_power = (obj.full_cycle_power.IE^2 + obj.full_cycle_power.IL^2) + ...
                             (obj.full_cycle_power.QE^2 + obj.full_cycle_power.QL^2);
 
-        obj.noise_power = (var_IE+var_IL) + (var_QE+var_QL);
+        obj.noise_power = (noise_var.IE^2 + noise_var.IL^2) + (noise_var.QE^2 + noise_var.QL^2);
 
     end
 

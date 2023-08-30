@@ -60,7 +60,7 @@ acquisition_data = acquisition_class.acquireSV;
 
 pll_bw = 12;
 fll_bw = 1;
-dll_bw = 5;
+dll_bw = 3;
 
 initialization.fll_bw = fll_bw;
 initialization.pll_bw = pll_bw;
@@ -69,11 +69,12 @@ initialization.dll_bw = dll_bw;
 initialization.acq_doppler = acquisition_data.doppler_shift(acquisition_data.sv_list == 7);
 initialization.chipping_rate = chipping_rate;
 initialization.ca_code = ca_code(7,:);
-initialization.cn0_averaging_window = 50;
+
+initialization.cn0_ave_coeff = 0.99; % from A. Givhan thesis
 
 tracking_class = TrackingChannel(initialization);
 
-seconds_to_read = 5*60; % grab this many samples of data
+seconds_to_read = 30*60; % grab this many samples of data
 max_counter = seconds_to_read*20000*1000; % [max number of samples to read]
 
 i = 1;
