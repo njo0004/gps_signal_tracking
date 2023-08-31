@@ -128,12 +128,20 @@ methods
         % --- Running Sub-Classes --- %
         obj.phase_lock_loop = obj.phase_lock_loop.ingestData(obj.Tint,pll_correlators);
         obj.delay_lock_loop = obj.delay_lock_loop.ingestData(early_power,late_power,obj.Tint);
-        obj.cn0_estimator = obj.cn0_estimator.ingestData(obj.channel_power,obj.noise_power,obj.Tint);
 
+        % only update CN0 estimate if channel power is better than noise
+        % power
+
+        if(obj.channel_power>4*obj.noise_power)
+            obj.cn0_estimator = obj.cn0_estimator.ingestData(obj.channel_power,obj.noise_power,obj.Tint);
+            tracking_results.cn0_estimate = obj.cn0_estimator.Cn0_estimate;
+        else
+            tracking_results.cn0_estimate = 0.001;
+        end
+        
         obj.doppler_frequency = obj.phase_lock_loop.f_hat;
         obj.chipping_rate     = obj.delay_lock_loop.chipping_rate;
 
-        tracking_results.cn0_estimate = obj.cn0_estimator.Cn0_estimate;
         tracking_results.IP = pll_correlators.IP;
         tracking_results.QP = pll_correlators.QP;
         tracking_results.doppler_estimate = obj.doppler_frequency;
